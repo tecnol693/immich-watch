@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "immich-watch"
+version = "1.0.0"
+authors = [
+	{name = "tecnol", email = "tecnol@tuta.io"}
+]
+description = "Watch download folder, and automatically upload everything"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.7"
+dependencies = [
+	"requests",
+]
+
+[project.scripts]
+immich-watch = "immich_watch.main:main"
