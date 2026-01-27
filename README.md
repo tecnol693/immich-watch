@@ -1,4 +1,6 @@
-# Immich Watcher 
+# Immich Watcher
+
+<a href="https://codeberg.org/tecnol/immich-watch"><img alt="Mirror" src="https://img.shields.io/badge/Mirror-Codeberg-blue"></img></a>
 
 Simple script that constanty watches your download folder for photo or video to upload
 
