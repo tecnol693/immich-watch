@@ -6,4 +6,5 @@ Working but still under development, could currupt your media
 
 ## Installation
 `pip install requests`
+
 `pipx install .`
