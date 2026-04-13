@@ -50,15 +50,21 @@ def upload(file):
         response = requests.post(f'{BASE_URL}/assets', headers=headers, data=data, files=files)
         print(response.json())
 
-#Costantly watch if file present inside download folder, WIP configparser
+#Watch if file present inside download folder, WIP configparser
 def watch():
     image = {"jpg", "jpeg", "png", "gif", "webp"}
     video = {"mp4", "avi", "mov", "ogg", "wmv", "webm"}
     exts = image | video
     folder = os.path.expanduser('~/Downloads')
+    count = 0
     
-    #Heavy CPU usage, WIP detection of empty folder
     while True:
+        #Check for new files
+        if count == sum(1 for entry in os.scandir(folder)):
+            continue
+        
+        #Check file extension
+        count = 0
         for f in os.listdir(folder):
             file = os.path.join(folder, f)
             ext = file.split(".")[-1].lower()
@@ -73,7 +79,9 @@ def watch():
                 except FileNotFoundError:
                     print("File does not exist")
                     return
-                os.remove(file) 
+                os.remove(file)
+            else:
+                count = count + 1
 
 def main():
     try:
