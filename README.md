@@ -10,3 +10,5 @@ Working but still under development, could currupt your media
 `pip install requests`
 
 `pipx install .`
+
+'echo 'immich-watch > /dev/null 2>&1 &' >> .bashrc'
