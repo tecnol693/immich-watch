@@ -34,7 +34,7 @@ def wait(file):
             break
         else:
             checksize = size
-            time.sleep(0.2)
+            time.sleep(0.5)
 
 #Actually upload
 def upload(file):
