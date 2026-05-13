@@ -12,3 +12,5 @@ Working but still under development, could currupt your media
 `pipx install .`
 
 `echo 'immich-watch > /dev/null 2>&1 &' >> .bashrc`
+
+`source .bashrc`
