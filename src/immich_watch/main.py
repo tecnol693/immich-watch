@@ -1,20 +1,36 @@
 import requests
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import sys
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, HTTPError
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import configparser
 
 #Config
-API_KEY = os.environ["IMMICH_API_KEY"]#Set yout immich API in bashrc
-if not API_KEY:
-    raise RuntimeError("IMMICH_API_KEY not set")
-BASE_URL = 'http://127.0.0.1:2283/api'
+global url, api
 image = {"jpg", "jpeg", "png", "gif", "webp"}
 video = {"mp4", "avi", "mov", "ogg", "wmv", "webm"}
 exts = image | video
+
+
+def loadcnfg():
+    CONFIG_FILE = os.path.expanduser('~/.config/immich-watch.ini')
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+
+    if 'immich' not in config:
+        config['immich'] = {
+            'folder': input('Folder to watch: '),
+            'url': input('Immich url: '),
+            'api': input('Immich api: '),
+        }
+        os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
+        with open(CONFIG_FILE, 'w') as f:
+            config.write(f)
+
+    return config['immich']['folder'], config['immich']['url'], config['immich']['api']
 
 #Class for getting file name when created
 class Upload(FileSystemEventHandler):
@@ -23,7 +39,7 @@ class Upload(FileSystemEventHandler):
             file = event.src_path
             manage(file)
 
-#wait for the file to be fully downloaded
+#Wait for the file to be fully downloaded
 def wait(file):
     checksize = -1
 
@@ -34,29 +50,34 @@ def wait(file):
             break
         else:
             checksize = size
-            time.sleep(0.5)
+            time.sleep(2)
 
 #Actually upload
 def upload(file):
+    global url, api
+
     stats = os.stat(file)
 
     headers = {
         'Accept': 'application/json',
-        'x-api-key': API_KEY
+        'x-api-key': api
     }
 
+    taken_at = datetime.fromtimestamp(stats.st_mtime, tz=timezone.utc).isoformat()
     data = {
         'deviceAssetId': f'{file}-{stats.st_mtime}',
         'deviceId': 'python',
-        'fileCreatedAt': datetime.fromtimestamp(stats.st_mtime),
-        'fileModifiedAt': datetime.fromtimestamp(stats.st_mtime),
+        'fileCreatedAt': taken_at,
+        'fileModifiedAt': taken_at,
         'isFavorite': 'false',
     }
     
     with open(file, 'rb') as f:
         files = {'assetData': f}
-        response = requests.post(f'{BASE_URL}/assets', headers=headers, data=data, files=files)
-        print(response.json())
+        response = requests.post(f'{url}/assets', headers=headers, data=data, files=files)
+    
+    response.raise_for_status()
+    print(response.json())
 
 #Upload all the file that were sitting in the folder
 def preupload(folder):
@@ -67,9 +88,8 @@ def preupload(folder):
 #Extract, upload and remove the file
 def manage(file):
     #Get file extension
-    print("File: " + file)
-    #ext = file.split(".")[-1].lower()
-    if any(ext in file for ext in exts):
+    ext = file.split(".")[-1].lower()
+    if ext in exts:
         wait(file)
         try:
             upload(file)
@@ -79,10 +99,19 @@ def manage(file):
         except FileNotFoundError:
             print("File does not exist")
             return
+        except HTTPError as e:
+            try:
+                detail = e.response.json()
+            except ValueError:
+                detail = e.response.text
+            print("Upload rejected")
+            return
+
         os.remove(file)
 
 def main():
-    folder = os.path.expanduser('~/Downloads') #WIP configparser
+    global url, api
+    folder, url, api = loadcnfg()
 
     preupload(folder)
 
