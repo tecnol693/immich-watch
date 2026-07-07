@@ -9,6 +9,10 @@ Working but still under development, could currupt your media
 ## Installation
 `pip install requests watchdog`
 
+`git clone https://codeberg.org/tecnol/immich-watch.git`
+
+`cd immich-watch`
+
 `pipx install .`
 
 `echo 'immich-watch > /dev/null 2>&1 &' >> .bashrc`
